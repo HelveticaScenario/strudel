@@ -3,13 +3,15 @@
   "type": "module",
   "version": "0.6.0",
   "private": true,
+  "main": "src/electron/main.mjs",
   "scripts": {
     "dev": "astro dev --host 0.0.0.0",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview --port 3009 --host 0.0.0.0",
     "astro": "astro",
-    "postinstall": "cp node_modules/hs2js/dist/tree-sitter.wasm public && cp node_modules/hs2js/dist/tree-sitter-haskell.wasm public"
+    "postinstall": "cp node_modules/hs2js/dist/tree-sitter.wasm public && cp node_modules/hs2js/dist/tree-sitter-haskell.wasm public",
+    "electron-start": "electron-forge start"
   },
   "dependencies": {
     "@algolia/client-search": "^5.20.0",
@@ -70,10 +72,21 @@
     "worker-timers": "^8.0.13"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.8.0",
+    "@electron-forge/maker-deb": "^7.8.0",
+    "@electron-forge/maker-rpm": "^7.8.0",
+    "@electron-forge/maker-squirrel": "^7.8.0",
+    "@electron-forge/maker-zip": "^7.8.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.0",
+    "@electron-forge/plugin-fuses": "^7.8.0",
+    "@electron-forge/plugin-vite": "^7.8.0",
+    "@electron/fuses": "^1.8.0",
     "@vite-pwa/astro": "^0.5.0",
+    "astro-electron": "^0.5.0",
+    "electron": "36.1.0",
     "html-escaper": "^3.0.3",
     "sharp": "^0.33.5",
-    "workbox-window": "^7.3.0",
-    "vite-plugin-bundle-audioworklet": "workspace:*"
+    "vite-plugin-bundle-audioworklet": "workspace:*",
+    "workbox-window": "^7.3.0"
   }
 }

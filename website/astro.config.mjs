@@ -9,10 +9,13 @@ import bundleAudioWorkletPlugin from 'vite-plugin-bundle-audioworklet';
 
 import tailwind from '@astrojs/tailwind';
 import AstroPWA from '@vite-pwa/astro';
+import astroElectron from 'astro-electron';
 
 const site = `https://strudel.cc/`; // root url without a path
 const base = '/'; // base path of the strudel site
 const baseNoTrailing = base.endsWith('/') ? base.slice(0, -1) : base;
+
+console.log(process.env)
 
 // this rehype plugin fixes relative links
 // it works by prepending the base + page path to anchor links
@@ -131,6 +134,14 @@ export default defineConfig({
         ],
       },
     }),
+    Boolean(process.env.ELECTRON) && astroElectron({
+      main:{
+        entry: 'src/electron/main.mjs',
+      },
+      preload:{
+        input: 'src/electron/preload.cjs'
+      },
+    })
   ],
   site,
   base,

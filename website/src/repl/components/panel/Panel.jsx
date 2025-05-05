@@ -9,6 +9,7 @@ import { useLogger } from '../useLogger';
 import { WelcomeTab } from './WelcomeTab';
 import { PatternsTab } from './PatternsTab';
 import { ChevronLeftIcon, XMarkIcon } from '@heroicons/react/16/solid';
+import { isElectron } from '@src/electron/index.mjs';
 
 const TAURI = typeof window !== 'undefined' && window.__TAURI__;
 
@@ -83,7 +84,7 @@ const tabNames = {
   console: 'console',
   settings: 'settings',
 };
-if (TAURI) {
+if (isElectron()) {
   tabNames.files = 'files';
 }
 
