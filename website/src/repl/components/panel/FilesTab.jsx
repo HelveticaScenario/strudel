@@ -1,12 +1,15 @@
 import { Fragment, useEffect } from 'react';
 import React, { useMemo, useState } from 'react';
-import { isAudioFile, readDir, dir, playFile } from '../../files.mjs';
+import {
+  readDir,
+} from '@src/electron';
+import { isAudioFile, dir, playFile } from '../../files.mjs';
 
 export function FilesTab() {
   const [path, setPath] = useState([]);
   useEffect(() => {
     let init = false;
-    readDir('', { dir, recursive: true })
+    readDir('', dir, true)
       .then((children) => setPath([{ name: '~/music', children }]))
       .catch((err) => {
         console.log('error loadin files', err);

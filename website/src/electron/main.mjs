@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'url';
-import {readFile, writeFile} from 'node:fs/promises';
+import { readdir, readFile, writeFile, access } from 'node:fs/promises';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // if (require('electron-squirrel-startup')) {
@@ -25,17 +25,14 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
-    
+
     webPreferences: {
       preload: join(__dirname, 'preload.cjs'),
     },
 
   });
 
-  // mainWindow.loadURL('http://localhost:4321/'); // Load the development server URL
 
-  // and load the index.html of the app.
-  // mainWindow.loadFile(join(__dirname, '../dist/index.html'));
 
   // You can use `process.env.VITE_DEV_SERVER_URL` when the vite command is called `serve`
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -66,18 +63,29 @@ app.whenReady().then(() => {
   ipcMain.handle('select-directory', async (event, operation) => {
     const properties = operation === 'export' ? ['openDirectory', 'createDirectory'] : ['openDirectory'];
     const result = await dialog.showOpenDialog({
-        properties: properties
+      properties: properties
     });
     if (result.canceled) {
-        return null;
+      return null;
     } else {
-        return result.filePaths[0];
+      return result.filePaths[0];
     }
   });
 
-  ipcMain.handle('read-file', async (event, filePath) => {
+  ipcMain.handle('read-directory', async (event, dirPath, baseDirectory, recursive) => {
     try {
-      const data = await readFile(filePath, 'utf-8');
+      const dir = await readdir(join(baseDirectory ?? '', dirPath), { withFileTypes: true, recursive });
+      return dir
+    } catch (error) {
+      console.error('Error reading directory:', error);
+      throw error;
+    }
+  });
+
+
+  ipcMain.handle('read-file', async (event, filePath, baseDirectory, encoding) => {
+    try {
+      const data = await readFile(join(baseDirectory ?? '', filePath), { encoding });
       return data;
     } catch (error) {
       console.error('Error reading file:', error);
@@ -85,13 +93,22 @@ app.whenReady().then(() => {
     }
   });
 
-  ipcMain.handle('write-file', async (event, filePath, data) => {
+  ipcMain.handle('write-file', async (event, filePath, data, baseDirectory, encoding) => {
     try {
-      await writeFile(filePath, data, 'utf-8');
+      await writeFile(join(baseDirectory ?? '', filePath), data, { encoding });
       return true;
     } catch (error) {
       console.error('Error writing file:', error);
       throw error;
+    }
+  });
+
+  ipcMain.handle('exists', async (event, filePath, baseDirectory) => {
+    try {
+      await access(join(baseDirectory ?? '', filePath));
+      return true;
+    } catch (_e) {
+      return false;
     }
   });
 

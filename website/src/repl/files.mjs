@@ -7,21 +7,29 @@ import {
   loadBuffer,
 } from '@strudel/webaudio';
 
+import {
+  exists,
+  selectDirectory,
+  readDir,
+  readBinaryFile,
+  readTextFile,
+  writeTextFile,
+  getMusicPath
+} from '@src/electron';
+
 let TAURI;
 if (typeof window !== 'undefined') {
   TAURI = window?.__TAURI__;
 }
-export const { BaseDirectory, readDir, readBinaryFile, writeTextFile, readTextFile, exists } = TAURI?.fs || {};
-
-export const dir = BaseDirectory?.Audio; // https://tauri.app/v1/api/js/path#audiodir
+export const dir = await getMusicPath() // https://tauri.app/v1/api/js/path#audiodir
 const prefix = '~/music/';
 
 async function hasStrudelJson(subpath) {
-  return exists(subpath + '/strudel.json', { dir });
+  return exists(subpath + '/strudel.json', dir);
 }
 
 async function loadStrudelJson(subpath) {
-  const contents = await readTextFile(subpath + '/strudel.json', { dir });
+  const contents = await readTextFile(subpath + '/strudel.json', dir);
   const sampleMap = JSON.parse(contents);
   processSampleMap(sampleMap, (key, bank) => {
     registerSound(key, (t, hapValue, onended) => onTriggerSample(t, hapValue, onended, bank, fileResolver(subpath)), {
@@ -34,7 +42,7 @@ async function loadStrudelJson(subpath) {
 }
 
 async function writeStrudelJson(subpath) {
-  const children = await readDir(subpath, { dir, recursive: true });
+  const children = await readDir(subpath, dir, true);
   const name = subpath.split('/').slice(-1)[0];
   const tree = { name, children };
 
@@ -49,7 +57,7 @@ async function writeStrudelJson(subpath) {
   });
   const json = JSON.stringify(samples, null, 2);
   const filepath = subpath + '/strudel.json';
-  await writeTextFile(filepath, json, { dir });
+  await writeTextFile(filepath, json, dir);
   console.log(`wrote strudel.json with ${count} samples to ${subpath}!`);
 }
 
@@ -90,7 +98,7 @@ export async function resolveFileURL(url) {
     return loadCache[url];
   }
   loadCache[url] = (async () => {
-    const contents = await readBinaryFile(url, { dir });
+    const contents = await readBinaryFile(url, dir);
     return uint8ArrayToDataURL(contents);
   })();
   return loadCache[url];
