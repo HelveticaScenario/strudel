@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
-import { join, dirname, resolve } from 'node:path';
+import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'url';
 import { readdir, readFile, writeFile, access } from 'node:fs/promises';
+import { watch } from 'node:fs'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // if (require('electron-squirrel-startup')) {
@@ -45,6 +46,15 @@ const createWindow = () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools({ mode: 'detach' });
 };
+
+async function doesFileExist(filePath) {
+  try {
+    await access(filePath);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -115,6 +125,31 @@ app.whenReady().then(() => {
   ipcMain.handle('get-music-path', () => {
     return app.getPath('music');
   });
+
+  ipcMain.handle('watch-directory', (event, directory, port) => {
+    const watcher = watch(directory, { recursive: true }, (eventType, filename) => {
+
+      if (eventType === 'rename') {
+        if (doesFileExist(filename)) {
+          console.log(`File ${filename} added`);
+        } else {
+          console.log(`File ${filename} removed`);
+        }
+      } else if (eventType === 'change') {
+        console.log(`File ${filename} was changed`);
+      }
+      if (!filename) {
+
+        console.log('filename not provided');
+      }
+      event.sender.send('directory-changed', { eventType, filename });
+    });
+
+    port.onClose(() => {
+      console.log('Port closed, stopping watcher');
+      watcher.abort();
+    });
+  })
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
